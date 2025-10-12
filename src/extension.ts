@@ -13,10 +13,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('json2type.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from JSON2Type!');
+	const disposable = vscode.commands.registerCommand('json2type.initialize', () => {
+		var panel = vscode.window.createWebviewPanel(
+			'json2type', // Identifies the type of the webview. Used internally
+			'JSON2Type', // Title of the panel displayed to the user
+			vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+			{
+				enableScripts: true
+			} // Webview options. More on these later.
+		);
+		panel.webview.html = getWebviewContent();
 	});
 
 	context.subscriptions.push(disposable);
@@ -24,3 +30,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+function getWebviewContent(): string {
+	return `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>JSON2Type</title>
+			</head>
+			<body>
+				<h1>Welcome to JSON2Type</h1>
+				<p>This is a webview for the JSON2Type extension.</p>
+			</body>
+			</html>`;
+}
+

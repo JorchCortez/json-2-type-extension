@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "json2type.helloWorld",
-        "title": "Hello World"
+        "command": "json2type.initialize",
+        "title": "Initialize JSON2Type"
       }
     ]
   },
