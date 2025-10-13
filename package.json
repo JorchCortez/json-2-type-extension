@@ -16,8 +16,21 @@
       {
         "command": "json2type.initialize",
         "title": "Initialize JSON2Type"
+      },
+      {
+        "command": "json2type.convertJsonToType",
+        "title": "Convert JSON to Type"
       }
-    ]
+    ],
+    "menus": {
+        "editor/context": [
+            {
+                "command": "json2type.convertJsonToType",
+                "group": "navigation",
+                "when": "editorHasSelection"
+            }
+        ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
