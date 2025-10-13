@@ -98,7 +98,7 @@ The extension works out of the box with sensible defaults:
 Found a bug or have a feature request? Please open an issue on our [GitHub repository](https://github.com/JorchCortez/json-2-type-extension).
 
 ## 📄 License
-This extension is licensed under the [MIT License](LICENSE).
+This extension is licensed under the [MIT License](https://github.com/JorchCortez/json-2-type-extension/blob/main/LICENSE).
 
 ---
 **Enjoy converting JSON to TypeScript! 🎉**

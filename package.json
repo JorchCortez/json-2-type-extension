@@ -1,8 +1,11 @@
 {
-  "name": "json2type",
-  "displayName": "JSON2Type",
+  "name": "json2typegenerator",
+  "displayName": "JSON2Type Generator",
   "description": "An extension to turn json objects to types",
   "version": "0.0.1",
+  "publisher": "TheCodeRaccoons",
+  "repository": "https://github.com/JorchCortez/json-2-type-extension",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.105.0"
   },
