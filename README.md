@@ -16,7 +16,7 @@
 4. View the generated TypeScript types in a new panel
 5. Click **"Copy to Clipboard"** to copy the types
 
-![https://github.com/TheCodeRaccoons/Imagery/blob/main/json2type-usage.gif]()
+![json2type-usg](https://github.com/user-attachments/assets/37df9882-c3dc-44b7-bdd7-23c3511b8d02)
 
 ### Method 2: Command Palette
 1. Select JSON text in your editor
