@@ -1,71 +1,104 @@
-# json2type README
+# JSON2Type
+**JSON2Type** is a VS Code extension that converts JSON objects into TypeScript type definitions. Simply select any JSON text in your editor and convert it to properly formatted TypeScript types with syntax highlighting.
+## ✨ Features
+-  **🔄 JSON to TypeScript Conversion**: Convert any JSON object to TypeScript type definitions
+-  **🎨 Syntax Highlighting**: Generated types are displayed with proper TypeScript syntax highlighting
+-  **📋 Copy to Clipboard**: One-click copying of generated types
+-  **🌓 Theme Support**: Automatic light/dark theme detection
+-  **🔧 Smart Type Extraction**: Nested objects are extracted into separate type definitions
+-  **⚡ Context Menu Integration**: Right-click any selected JSON to convert
 
-This is the README for your extension "json2type". After writing up a brief description, we recommend including the following sections.
+## 🚀 Usage
+### Method 1: Context Menu (Recommended)
+1. Select any JSON text in your editor
+2. Right-click to open the context menu
+3. Click **"Convert JSON to Type"**
+4. View the generated TypeScript types in a new panel
+5. Click **"Copy to Clipboard"** to copy the types
 
-## Features
+![https://github.com/TheCodeRaccoons/Imagery/blob/main/json2type-usage.gif]()
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Method 2: Command Palette
+1. Select JSON text in your editor
+2. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+3. Search for **"Convert JSON to Type"**
+4. Press Enter to generate types
 
-For example if there is an image subfolder under your extension project workspace:
+## 📖 Example
+**Input JSON:**
+```json
+{
+	"user": {
+		"id": 123,
+		"name": "John Doe",
+		"email": "john@example.com"
+	},
+	"posts": [
+		{
+			"title": "Hello World",
+			"published": true,
+			"tags": ["typescript", "vscode"]
+		}
+	]
+}
+```
 
-\!\[feature X\]\(images/feature-x.png\)
+**Generated TypeScript:**
+```typescript
+type  userType  = {
+	id:  number;
+	name:  string;
+	email:  string;
+};
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+type  postType  = {
+	title:  string;
+	published:  boolean;
+	tags:  string[];
+};
 
-## Requirements
+type  rootType  = {
+	user:  userType;
+	posts:  postType[];
+};
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+```
 
-## Extension Settings
+## ⚙️ Configuration
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+The extension works out of the box with sensible defaults:
+-  **Root Type Name**: `rootType`
+-  **Singularization**: Enabled (e.g., `posts` → `postType`)
+-  **Object Extraction**: Enabled (nested objects become separate types)
+-  **Indentation**: 2 spaces
+-  **Quotes**: Single quotes
 
-For example:
+## 🎯 Requirements
 
-This extension contributes the following settings:
+- Visual Studio Code version 1.105.0 or higher
+- No additional dependencies required
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## 🐛 Known Issues
+- Very large JSON objects may take a moment to process
+- Complex nested structures might need manual type refinement
 
-## Known Issues
+## 📝 Release Notes
+  
+### 0.0.1 - Initial Release
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- ✅ Basic JSON to TypeScript conversion
+- ✅ Context menu integration
+- ✅ Syntax-highlighted output
+- ✅ Copy to clipboard functionality
+- ✅ Light/dark theme support
+- ✅ Smart object type extraction
 
-## Release Notes
+## 🤝 Contributing
 
-Users appreciate release notes as you update your extension.
+Found a bug or have a feature request? Please open an issue on our [GitHub repository](https://github.com/JorchCortez/json-2-type-extension).
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+## 📄 License
+This extension is licensed under the [MIT License](LICENSE).
 
 ---
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Enjoy converting JSON to TypeScript! 🎉**
