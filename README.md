@@ -2,9 +2,7 @@
 **JSON2Type** is a VS Code extension that converts JSON objects into TypeScript type definitions. Simply select any JSON text in your editor and convert it to properly formatted TypeScript types with syntax highlighting.
 ## ✨ Features
 -  **🔄 JSON to TypeScript Conversion**: Convert any JSON object to TypeScript type definitions
--  **🎨 Syntax Highlighting**: Generated types are displayed with proper TypeScript syntax highlighting
 -  **📋 Copy to Clipboard**: One-click copying of generated types
--  **🌓 Theme Support**: Automatic light/dark theme detection
 -  **🔧 Smart Type Extraction**: Nested objects are extracted into separate type definitions
 -  **⚡ Context Menu Integration**: Right-click any selected JSON to convert
 
@@ -90,7 +88,6 @@ The extension works out of the box with sensible defaults:
 - ✅ Context menu integration
 - ✅ Syntax-highlighted output
 - ✅ Copy to clipboard functionality
-- ✅ Light/dark theme support
 - ✅ Smart object type extraction
 
 ## 🤝 Contributing
