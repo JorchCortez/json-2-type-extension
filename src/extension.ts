@@ -5,23 +5,23 @@ import { GenerateOptions } from './lib/types';
 import { generateTypes } from './lib/generator';
 
 export interface AppOptions {
-  rootName: string;
-  singularize: boolean;
-  literalThreshold: number;
-  nullAsOptional: boolean;
-  indent: number;
-  quote: 'single' | 'double';
-  extractObjects: boolean;
+	rootName: string;
+	singularize: boolean;
+	literalThreshold: number;
+	nullAsOptional: boolean;
+	indent: number;
+	quote: 'single' | 'double';
+	extractObjects: boolean;
 }
 
 const defaultOptions: AppOptions = {
-  rootName: 'rootType',
-  singularize: true,
-  literalThreshold: 0,
-  nullAsOptional: false,
-  indent: 2,
-  quote: 'single',
-  extractObjects: true
+	rootName: 'rootType',
+	singularize: true,
+	literalThreshold: 0,
+	nullAsOptional: false,
+	indent: 2,
+	quote: 'single',
+	extractObjects: true
 };
 
 export function activate(context: vscode.ExtensionContext) {
@@ -30,12 +30,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 function cleanJsonString(jsonString: string): string {
 	return jsonString
-		// Remove trailing commas before closing braces and brackets
-		.replace(/,(\s*[}\]])/g, '$1')
-		// Remove comments (// and /* */)
-		.replace(/\/\/.*$/gm, '')
-		.replace(/\/\*[\s\S]*?\*\//g, '')
-		// Remove leading/trailing whitespace
+		.replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas before closing braces and brackets
+		.replace(/\/\/.*$/gm, '') // Remove comments (// and /* */)
+		.replace(/\/\*[\s\S]*?\*\//g, '') // Remove leading/trailing whitespace
 		.trim();
 }
 
@@ -52,7 +49,6 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 			}
 
 			try {
-			// Clean up the JSON string to handle trailing commas and other common issues
 			const cleanedJson = cleanJsonString(selectedText);
 			const parsedJson = JSON.parse(cleanedJson);
 			const generateOptions: GenerateOptions = {
@@ -77,7 +73,17 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 				);
 				panel.webview.html = getWebviewContent(types);
 			} catch (err) {
-				vscode.window.showErrorMessage('Failed to generate types: Invalid JSON input.');
+				let errorMessage = 'Failed to generate types: ';
+				
+				if (err instanceof SyntaxError) {
+					errorMessage += `Invalid JSON syntax - Message: ${err.message}. ${err.cause ? ` ,Reason: ${err.cause}` : ''}`;
+				} else if (err instanceof Error) {
+					errorMessage += err.message;
+				} else {
+					errorMessage += 'Unknown error occurred while processing JSON';
+				}
+
+				vscode.window.showErrorMessage(errorMessage + ' | Selected JSON: ' + selectedText);
 			}
 
 		} else {
