@@ -28,6 +28,17 @@ export function activate(context: vscode.ExtensionContext) {
 	convertJsonToType(context);
 }
 
+function cleanJsonString(jsonString: string): string {
+	return jsonString
+		// Remove trailing commas before closing braces and brackets
+		.replace(/,(\s*[}\]])/g, '$1')
+		// Remove comments (// and /* */)
+		.replace(/\/\/.*$/gm, '')
+		.replace(/\/\*[\s\S]*?\*\//g, '')
+		// Remove leading/trailing whitespace
+		.trim();
+}
+
 export function convertJsonToType(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('json2type.convertJsonToType', () => {
 		const editor = vscode.window.activeTextEditor;
@@ -41,7 +52,9 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 			}
 
 			try {
-			const parsedJson = JSON.parse(selectedText);
+			// Clean up the JSON string to handle trailing commas and other common issues
+			const cleanedJson = cleanJsonString(selectedText);
+			const parsedJson = JSON.parse(cleanedJson);
 			const generateOptions: GenerateOptions = {
 				rootName: defaultOptions.rootName,
 				singularize: defaultOptions.singularize,
