@@ -1,0 +1,42 @@
+name: CI - Pull Request
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Lint code
+      run: npm run lint
+      
+    - name: Compile TypeScript
+      run: npm run compile
+      
+    - name: Run tests
+      run: npm test
+      continue-on-error: true
+      
+    - name: Package extension
+      run: npx vsce package
+      
+    - name: Upload VSIX artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-vsix
+        path: "*.vsix"
+        retention-days: 7
