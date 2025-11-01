@@ -82,13 +82,15 @@ The extension works out of the box with sensible defaults:
 
 ## 📝 Release Notes
   
-### 0.0.1 - Initial Release
+### 1.0.5 - Initial Release
 
 - ✅ Basic JSON to TypeScript conversion
 - ✅ Context menu integration
 - ✅ Syntax-highlighted output
 - ✅ Copy to clipboard functionality
 - ✅ Smart object type extraction
+- ✅ Pre cleanup for trailing commas to prevent issues
+- ✅ Improvement in error comments to better understand errors
 
 ## 🤝 Contributing
 
