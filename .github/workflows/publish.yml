@@ -5,6 +5,11 @@ on:
     branches: [ main, master ]
   workflow_dispatch: # Allow manual triggering
 
+permissions:
+  contents: write  # Required to push commits and create releases
+  actions: read    # Required to read workflow status
+  packages: read   # Required for package operations
+
 jobs:
   publish:
     runs-on: ubuntu-latest
