@@ -2,7 +2,7 @@
   "name": "json2typegenerator",
   "displayName": "JSON2Type Generator",
   "description": "An extension to turn json objects to types",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "TheCodeRaccoons",
   "repository": "https://github.com/JorchCortez/json-2-type-extension",
   "icon": "icon.png",
