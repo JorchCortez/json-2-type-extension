@@ -18,7 +18,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
@@ -52,10 +52,10 @@ jobs:
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         
     - name: Package extension
-      run: npx vsce package
+      run: npx @vscode/vsce package
       
     - name: Publish to VS Code Marketplace
-      run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
+      run: npx @vscode/vsce publish --pat ${{ secrets.VSCE_PAT }}
       env:
         VSCE_PAT: ${{ secrets.VSCE_PAT }}
         
