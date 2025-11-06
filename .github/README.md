@@ -3,6 +3,10 @@
 ## Automation Overview
 This repository is configured for automatic publishing to the VS Code Marketplace when code is pushed to the main branch.
 
+## Follow along the development 
+- Learn how this project started [here](https://www.thecoderaccoons.com/blog-posts/i-accidentally-made-a-vs-code-extension)
+- Learn more about this project [here](https://www.thecoderaccoons.com/projects/json2type-generator)
+
 ## Required GitHub Secrets
 Make sure the following secrets are configured in your GitHub repository:
 
