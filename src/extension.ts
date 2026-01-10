@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { GenerateOptions } from './lib/types';
 import { generateTypes } from './lib/generator';
+import { sanitizeSelection, cleanJsonString } from './lib/sanitize';
 
 export interface AppOptions {
 	rootName: string;
@@ -28,13 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
 	convertJsonToType(context);
 }
 
-function cleanJsonString(jsonString: string): string {
-	return jsonString
-		.replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas before closing braces and brackets
-		.replace(/\/\/.*$/gm, '') // Remove comments (// and /* */)
-		.replace(/\/\*[\s\S]*?\*\//g, '') // Remove leading/trailing whitespace
-		.trim();
-}
+// moved to lib/sanitize.ts
 
 export function convertJsonToType(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('json2type.convertJsonToType', () => {
@@ -49,7 +44,9 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 			}
 
 			try {
-			const cleanedJson = cleanJsonString(selectedText);
+			// Try to sanitize JavaScript/TypeScript snippets like `const x = [...]` into JSON
+			const jsonCandidate = sanitizeSelection(selectedText);
+			const cleanedJson = cleanJsonString(jsonCandidate);
 			const parsedJson = JSON.parse(cleanedJson);
 			const generateOptions: GenerateOptions = {
 				rootName: defaultOptions.rootName,
