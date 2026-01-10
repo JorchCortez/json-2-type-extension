@@ -27,48 +27,35 @@ const defaultOptions: AppOptions = {
 
 export function activate(context: vscode.ExtensionContext) {
 	convertJsonToType(context);
+	convertFromClipboard(context);
 }
 
 // moved to lib/sanitize.ts
 
 export function convertJsonToType(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('json2type.convertJsonToType', () => {
+	let disposable = vscode.commands.registerCommand('json2type.convertJsonToType', async () => {
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
 			const selection = editor.selection;
 			const selectedText = editor.document.getText(selection);
 
 			if (!selectedText || selectedText.trim().length === 0) {
-				vscode.window.showWarningMessage('Please select some JSON text to convert.');
+				// Fallback to clipboard for Terminal/Debug Console use-cases
+				try {
+					const clipboardText = await vscode.env.clipboard.readText();
+					if (!clipboardText || clipboardText.trim().length === 0) {
+						vscode.window.showWarningMessage('No selection found. Copy JSON to clipboard and run again or use "Convert JSON from Clipboard".');
+						return;
+					}
+					processInputText(clipboardText);
+				} catch {
+					vscode.window.showWarningMessage('Unable to read clipboard. Please select JSON or copy it to clipboard.');
+				}
 				return;
 			}
 
 			try {
-			// Try to sanitize JavaScript/TypeScript snippets like `const x = [...]` into JSON
-			const jsonCandidate = sanitizeSelection(selectedText);
-			const cleanedJson = cleanJsonString(jsonCandidate);
-			const parsedJson = JSON.parse(cleanedJson);
-			const generateOptions: GenerateOptions = {
-				rootName: defaultOptions.rootName,
-				singularize: defaultOptions.singularize,
-				literalThreshold: defaultOptions.literalThreshold,
-				nullAsOptional: defaultOptions.nullAsOptional,
-				indent: defaultOptions.indent,
-				quote: defaultOptions.quote,
-				extractObjects: defaultOptions.extractObjects
-			};
-
-			const types = generateTypes(parsedJson, generateOptions);
-
-				var panel = vscode.window.createWebviewPanel(
-					'json2type', // Identifies the type of the webview. Used internally
-					'JSON2Type', // Title of the panel displayed to the user
-					vscode.ViewColumn.One, // Editor column to show the new webview panel in.
-					{
-						enableScripts: true
-					} // Webview options. More on these later.
-				);
-				panel.webview.html = getWebviewContent(types);
+				processInputText(selectedText);
 			} catch (err) {
 				let errorMessage = 'Failed to generate types: ';
 				
@@ -92,8 +79,66 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
+export function convertFromClipboard(context: vscode.ExtensionContext) {
+	const disposable = vscode.commands.registerCommand('json2type.convertFromClipboard', async () => {
+		try {
+			const clipboardText = await vscode.env.clipboard.readText();
+			if (!clipboardText || clipboardText.trim().length === 0) {
+				vscode.window.showWarningMessage('Clipboard is empty. Copy JSON from Terminal/Debug Console and try again.');
+				return;
+			}
+			processInputText(clipboardText);
+		} catch (err) {
+			let errorMessage = 'Failed to read from clipboard: ';
+			if (err instanceof Error) {
+				errorMessage += err.message;
+			}
+			vscode.window.showErrorMessage(errorMessage);
+		}
+	});
+
+	context.subscriptions.push(disposable);
+}
+
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+function processInputText(raw: string) {
+	try {
+		const jsonCandidate = sanitizeSelection(raw);
+		const cleanedJson = cleanJsonString(jsonCandidate);
+		const parsedJson = JSON.parse(cleanedJson);
+		const generateOptions: GenerateOptions = {
+			rootName: defaultOptions.rootName,
+			singularize: defaultOptions.singularize,
+			literalThreshold: defaultOptions.literalThreshold,
+			nullAsOptional: defaultOptions.nullAsOptional,
+			indent: defaultOptions.indent,
+			quote: defaultOptions.quote,
+			extractObjects: defaultOptions.extractObjects
+		};
+
+		const types = generateTypes(parsedJson, generateOptions);
+
+		var panel = vscode.window.createWebviewPanel(
+			'json2type',
+			'JSON2Type',
+			vscode.ViewColumn.One,
+			{ enableScripts: true }
+		);
+		panel.webview.html = getWebviewContent(types);
+	} catch (err) {
+		let errorMessage = 'Failed to generate types: ';
+		if (err instanceof SyntaxError) {
+			errorMessage += `Invalid JSON syntax - Message: ${err.message}. ${err.cause ? ` ,Reason: ${err.cause}` : ''}`;
+		} else if (err instanceof Error) {
+			errorMessage += err.message;
+		} else {
+			errorMessage += 'Unknown error occurred while processing input';
+		}
+		vscode.window.showErrorMessage(errorMessage);
+	}
+}
 
 function getWebviewContent(text?: string): string {
 	return `<!DOCTYPE html>
