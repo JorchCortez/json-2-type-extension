@@ -34,6 +34,16 @@ Start the Extension Development Host to debug the command logic.
   - Right-click → "Convert JSON to Type" or use the Command Palette.
   - The generated types appear in a webview; use the copy button as needed.
 
+## Commands & Menus
+- Command Palette:
+  - Convert JSON to Type
+  - Convert JSON from Clipboard
+- Editor Context Menu:
+  - Convert JSON to Type (uses clipboard when no selection)
+  - Convert JSON from Clipboard
+- Terminal View Title (toolbar):
+  - Convert JSON from Clipboard
+
 Reference files:
 - Extension entry: [src/extension.ts](src/extension.ts)
 - Type generator: [src/lib/generator.ts](src/lib/generator.ts)

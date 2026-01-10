@@ -12,7 +12,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:json2type.convertJsonToType",
+    "onCommand:json2type.convertFromClipboard"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -23,16 +26,37 @@
       {
         "command": "json2type.convertJsonToType",
         "title": "Convert JSON to Type"
+      },
+      {
+        "command": "json2type.convertFromClipboard",
+        "title": "Convert JSON from Clipboard"
       }
     ],
     "menus": {
-        "editor/context": [
-            {
-                "command": "json2type.convertJsonToType",
-                "group": "navigation",
-                "when": "editorHasSelection"
-            }
-        ]
+      "editor/context": [
+        {
+          "command": "json2type.convertJsonToType",
+          "group": "navigation",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "json2type.convertJsonToType",
+          "group": "navigation",
+          "when": "editorTextFocus && !editorHasSelection"
+        },
+        {
+          "command": "json2type.convertFromClipboard",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "json2type.convertFromClipboard",
+          "group": "navigation",
+          "when": "view == terminal"
+        }
+      ]
     }
   },
   "scripts": {

@@ -22,6 +22,18 @@
 3. Search for **"Convert JSON to Type"**
 4. Press Enter to generate types
 
+### Method 3: From Clipboard (Terminal/Debug Console)
+1. Copy JSON output from the Terminal or Debug Console
+2. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+3. Search for **"Convert JSON from Clipboard"**
+4. Press Enter to generate types from the clipboard content
+
+Tip: If you run **"Convert JSON to Type"** with an empty selection, the extension will automatically try parsing the clipboard content. You can also right-click anywhere in the editor and choose **"Convert JSON to Type"** with no selection; it will use the clipboard.
+
+Alternative entry points:
+- Editor context menu: Right-click in the editor → **Convert JSON from Clipboard**
+- Terminal toolbar: In the Terminal panel title bar → **Convert JSON from Clipboard**
+
 ## 📖 Example
 **Input JSON:**
 ```json
@@ -62,6 +74,17 @@ type  rootType  = {
 
 ```
 
+### JS/TS Snippet Example
+You can also select JavaScript/TypeScript assignments; the extension sanitizes the right-hand side and parses the JSON structure:
+
+```ts
+const items = [
+	{ "id": 1, "val": 100 },
+	{ "id": 2, "val": 380 }
+];
+```
+Selecting the whole assignment or just the array will generate an `itemType` and a `rootType = itemType[]`.
+
 ## ⚙️ Configuration
 
 The extension works out of the box with sensible defaults:
@@ -73,7 +96,7 @@ The extension works out of the box with sensible defaults:
 
 ## 🎯 Requirements
 
-- Visual Studio Code version 1.105.0 or higher
+- Visual Studio Code version 1.90.0 or higher
 - No additional dependencies required
 
 ## 🐛 Known Issues
@@ -101,3 +124,10 @@ This extension is licensed under the [MIT License](https://github.com/JorchCorte
 
 ---
 **Enjoy converting JSON to TypeScript! 🎉**
+
+---
+Developer docs: see `DEV-DOCS.md` for local install, testing, and F5 debugging.
+
+## Commands
+- **Convert JSON to Type**: Converts selected text or uses clipboard if no selection.
+- **Convert JSON from Clipboard**: Converts JSON currently in the clipboard; available in Command Palette, editor context menu, and Terminal toolbar.
