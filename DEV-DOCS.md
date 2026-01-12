@@ -1,6 +1,6 @@
 # Developer Docs: JSON2Type
 
-This document covers local setup, running tests, and debugging for the JSON2Type extension.
+This document covers local setup, running tests, and debugging for the JSON2Type npextension.
 
 ## Install
 - Prerequisites: Node.js (LTS), VS Code 1.90+ (per engines).
@@ -43,6 +43,11 @@ Start the Extension Development Host to debug the command logic.
   - Convert JSON from Clipboard
 - Terminal View Title (toolbar):
   - Convert JSON from Clipboard
+
+## CI & Version Bump
+- Automatic deployment bumps the extension version during publish.
+- Repository rules require changes via Pull Request; the pipeline opens a PR for the version bump instead of pushing directly to `main`.
+- Marketplace publish and GitHub Release are performed during the workflow; merging the PR updates `package.json` in `main`.
 
 Reference files:
 - Extension entry: [src/extension.ts](src/extension.ts)

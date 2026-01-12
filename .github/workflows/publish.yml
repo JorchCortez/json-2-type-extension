@@ -88,10 +88,20 @@ jobs:
         
     - name: Commit version bump
       if: steps.check_commit.outputs.skip != 'true'
-      run: |
-        git add package.json
-        git commit -m "Bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
-        git push
+      uses: peter-evans/create-pull-request@v6
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+        branch: chore/bump-version-${{ steps.version.outputs.new_version }}
+        title: "Bump version to v${{ steps.version.outputs.new_version }}"
+        body: |
+          Automated version bump.
+          
+          - Package published to Marketplace
+          - Release created with VSIX asset
+          
+          After merging, the repository will reflect v${{ steps.version.outputs.new_version }} in package.json.
+        labels: auto-bump
         
     - name: Create GitHub Release
       if: steps.check_commit.outputs.skip != 'true'
