@@ -1,6 +1,6 @@
 # Developer Docs: JSON2Type
 
-This document covers local setup, running tests, and debugging the extension.
+This document covers local setup, running tests, and debugging for the JSON2Type extension.
 
 ## Install
 - Prerequisites: Node.js (LTS), VS Code 1.90+ (per engines).
