@@ -2,7 +2,7 @@
   "name": "json2typegenerator",
   "displayName": "JSON2Type Generator",
   "description": "An extension to turn json objects to types",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publisher": "TheCodeRaccoons",
   "repository": "https://github.com/JorchCortez/json-2-type-extension",
   "icon": "icon.png",
@@ -40,11 +40,6 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "json2type.convertJsonToType",
-          "group": "navigation",
-          "when": "editorTextFocus && !editorHasSelection"
-        },
-        {
           "command": "json2type.convertFromClipboard",
           "group": "navigation",
           "when": "editorTextFocus"
@@ -69,6 +64,9 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
   },
   "devDependencies": {
     "@types/vscode": "^1.90.0",

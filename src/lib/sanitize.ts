@@ -6,6 +6,14 @@ export function sanitizeSelection(selection: string): string {
     return text;
   }
 
+  // Handle browser/console printed prefixes like "Object { ... }" or "Array [ ... ]"
+  if (text.startsWith('Object {')) {
+    return text.replace(/^Object\s+/, '');
+  }
+  if (text.startsWith('Array [')) {
+    return text.replace(/^Array\s+/, '');
+  }
+
   // Strip leading export keyword
   let candidate = text.replace(/^export\s+/, '');
 
@@ -24,6 +32,13 @@ export function sanitizeSelection(selection: string): string {
   // If it is wrapped in parentheses, unwrap
   if (candidate.startsWith('(') && candidate.endsWith(')')) {
     candidate = candidate.slice(1, -1).trim();
+  }
+
+  // If selection looks like a single object member (e.g., "key": {...})
+  // or JS-like member (key: {...}), wrap it into an object so it becomes valid JSON
+  const memberRegex = /^(?:["'][^"']+["']|[A-Za-z_$][A-Za-z0-9_$]*)\s*:\s*[\s\S]+$/;
+  if (memberRegex.test(candidate)) {
+    candidate = `{ ${candidate} }`;
   }
 
   return candidate;

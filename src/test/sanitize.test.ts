@@ -34,4 +34,12 @@ suite('Sanitize Selection', () => {
     const sanitized = sanitizeSelection(input);
     assert.strictEqual(sanitized, `({ a: 1, b: true })`.replace(/^\(/, '').replace(/\)$/, ''));
   });
+
+  test('Single member selection is wrapped into object', () => {
+    const input = `"questLog": { "Quest": [ { "id": 1 } ] }`;
+    const sanitized = sanitizeSelection(input);
+    assert.ok(sanitized.startsWith('{') && sanitized.endsWith('}'), 'Should be wrapped as an object');
+    const parsed = JSON.parse(cleanJsonString(sanitized));
+    assert.ok(parsed.questLog && Array.isArray(parsed.questLog.Quest), 'questLog.Quest should exist');
+  });
 });

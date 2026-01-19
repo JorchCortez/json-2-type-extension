@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { GenerateOptions } from './lib/types';
 import { generateTypes } from './lib/generator';
 import { sanitizeSelection, cleanJsonString } from './lib/sanitize';
+import { parse as json5Parse } from 'json5';
 
 export interface AppOptions {
 	rootName: string;
@@ -26,8 +27,13 @@ const defaultOptions: AppOptions = {
 };
 
 export function activate(context: vscode.ExtensionContext) {
+	textContext = context;
 	convertJsonToType(context);
 	convertFromClipboard(context);
+
+	// Provide inline terminal link to convert JSON directly from terminal lines
+	const terminalLinkDisposable = vscode.window.registerTerminalLinkProvider(new JsonTerminalLinkProvider());
+	context.subscriptions.push(terminalLinkDisposable);
 }
 
 // moved to lib/sanitize.ts
@@ -40,17 +46,7 @@ export function convertJsonToType(context: vscode.ExtensionContext) {
 			const selectedText = editor.document.getText(selection);
 
 			if (!selectedText || selectedText.trim().length === 0) {
-				// Fallback to clipboard for Terminal/Debug Console use-cases
-				try {
-					const clipboardText = await vscode.env.clipboard.readText();
-					if (!clipboardText || clipboardText.trim().length === 0) {
-						vscode.window.showWarningMessage('No selection found. Copy JSON to clipboard and run again or use "Convert JSON from Clipboard".');
-						return;
-					}
-					processInputText(clipboardText);
-				} catch {
-					vscode.window.showWarningMessage('Unable to read clipboard. Please select JSON or copy it to clipboard.');
-				}
+				vscode.window.showWarningMessage('No selection found. Select JSON in the editor or use "Convert JSON from Clipboard".');
 				return;
 			}
 
@@ -103,11 +99,20 @@ export function convertFromClipboard(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
+let textContext: vscode.ExtensionContext | undefined;
+
 function processInputText(raw: string) {
 	try {
 		const jsonCandidate = sanitizeSelection(raw);
 		const cleanedJson = cleanJsonString(jsonCandidate);
-		const parsedJson = JSON.parse(cleanedJson);
+
+		let parsedJson: unknown;
+		try {
+			parsedJson = JSON.parse(cleanedJson);
+		} catch (parseErr) {
+			// Fallback to JSON5 for JS-like objects from consoles (single quotes, unquoted keys, trailing commas)
+			parsedJson = json5Parse(cleanedJson);
+		}
 		const generateOptions: GenerateOptions = {
 			rootName: defaultOptions.rootName,
 			singularize: defaultOptions.singularize,
@@ -126,7 +131,49 @@ function processInputText(raw: string) {
 			vscode.ViewColumn.One,
 			{ enableScripts: true }
 		);
-		panel.webview.html = getWebviewContent(types);
+		const nonce = getNonce();
+		const scriptUri = (textContext && typeof (panel.webview as any).asWebviewUri === 'function')
+			? panel.webview.asWebviewUri(vscode.Uri.joinPath(textContext.extensionUri, 'media', 'panel.js'))
+			: undefined;
+		panel.webview.html = getWebviewContent(types, generateOptions.rootName, panel.webview, nonce, scriptUri);
+
+		panel.webview.onDidReceiveMessage((message) => {
+			console.log('[json2type] message from webview:', message);
+			if (!message) {return;}
+			if (message.command === 'webviewReady') {
+				// Webview script loaded; no toast in quiet mode
+				return;
+			}
+			if (message.command === 'updateRootName') {
+				const newRoot: string = String(message.rootName ?? '').trim();
+				if (!newRoot) {
+					vscode.window.showWarningMessage('Root type name cannot be empty.');
+					return;
+				}
+				try {
+					const updated = generateTypes(parsedJson, { ...generateOptions, rootName: newRoot });
+					panel.webview.postMessage({ type: 'updateTypes', text: updated, rootName: newRoot });
+				} catch (err) {
+					let errorMessage = 'Failed to update root type: ';
+					if (err instanceof Error) {errorMessage += err.message;}
+					vscode.window.showErrorMessage(errorMessage);
+				}
+			}
+			if (message.command === 'copyTypes') {
+				const textToCopy: string = String(message.text ?? '');
+				if (!textToCopy) {
+					panel.webview.postMessage({ type: 'copyStatus', ok: false, reason: 'empty' });
+					return;
+				}
+				vscode.env.clipboard.writeText(textToCopy).then(() => {
+					panel.webview.postMessage({ type: 'copyStatus', ok: true });
+				}, (err: unknown) => {
+					const reason = typeof err === 'object' && err && 'message' in (err as any) ? String((err as any).message) : 'copy failed';
+					vscode.window.showErrorMessage('Copy failed: ' + reason);
+					panel.webview.postMessage({ type: 'copyStatus', ok: false, reason });
+				});
+			}
+		});
 	} catch (err) {
 		let errorMessage = 'Failed to generate types: ';
 		if (err instanceof SyntaxError) {
@@ -140,12 +187,53 @@ function processInputText(raw: string) {
 	}
 }
 
-function getWebviewContent(text?: string): string {
+interface JsonTerminalLink extends vscode.TerminalLink { text: string }
+
+export class JsonTerminalLinkProvider implements vscode.TerminalLinkProvider<JsonTerminalLink> {
+	provideTerminalLinks(context: vscode.TerminalLinkContext, _token: vscode.CancellationToken): JsonTerminalLink[] | undefined {
+		const line = context.line;
+
+		// Heuristic: look for start of JSON object/array in the line
+		const braceIdx = line.indexOf('{');
+		const bracketIdx = line.indexOf('[');
+		const startIdx = (braceIdx === -1) ? bracketIdx : (bracketIdx === -1 ? braceIdx : Math.min(braceIdx, bracketIdx));
+
+		if (startIdx === -1) {
+			return undefined;
+		}
+
+		// Link from the JSON start to end of line; sanitize will trim non-JSON suffixes
+		const jsonPart = line.slice(startIdx);
+		const link: JsonTerminalLink = { startIndex: startIdx, length: jsonPart.length, tooltip: 'Convert JSON to Type', text: jsonPart };
+		return [link];
+	}
+
+	handleTerminalLink(link: JsonTerminalLink): vscode.ProviderResult<void> {
+		const text = link.text ?? '';
+		if (!text.trim()) {
+			vscode.window.showWarningMessage('No JSON detected in terminal line.');
+			return;
+		}
+		try {
+			processInputText(text);
+		} catch (err) {
+			let errorMessage = 'Failed to process terminal JSON: ';
+			if (err instanceof Error) {
+				errorMessage += err.message;
+			}
+			vscode.window.showErrorMessage(errorMessage);
+		}
+	}
+}
+
+function getWebviewContent(text: string | undefined, rootName: string | undefined, webview: vscode.Webview, nonce: string, scriptUri?: vscode.Uri): string {
+	const initialRawEncoded = encodeURIComponent(String(text ?? ''));
 	return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; script-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline';">
 				<title>JSON2Type</title>
 				<style>
 					body {
@@ -277,34 +365,27 @@ function getWebviewContent(text?: string): string {
 			<body>
 				<h1>Generated TypeScript Types</h1>
 				<p>Here are your generated TypeScript type definitions:</p>
-				<div class="code-container">
-					<pre id="generated-code">${text ? highlightTypeScript(text) : 'No code generated yet.'}</pre>
+				<div style="margin: 8px 0 16px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+					<label for="rootNameInput">Root type:</label>
+					<input id="rootNameInput" type="text" placeholder="rootType" value="${rootName ?? ''}" style="flex:0 0 220px; padding:6px 8px; border-radius:4px; border:1px solid #30363d; background:#0d1117; color:#d4d4d4;"/>
+					<span id="rootNamePreview" style="opacity:.8; font-size:12px;">→ Will generate…</span>
 				</div>
-				<button onclick="copyToClipboard()">Copy to Clipboard</button>
-				
-				<script>
-					function copyToClipboard() {
-						const codeElement = document.getElementById('generated-code');
-						const textToCopy = codeElement.textContent || codeElement.innerText;
-						
-						navigator.clipboard.writeText(textToCopy).then(function() {
-							// Show success feedback
-							const button = event.target;
-							const originalText = button.textContent;
-							button.textContent = 'Copied!';
-							button.classList.add('copy-success');
-							
-							setTimeout(() => {
-								button.textContent = originalText;
-								button.classList.remove('copy-success');
-							}, 2000);
-						}).catch(function(err) {
-							console.error('Could not copy text: ', err);
-						});
-					}
-				</script>
+				<div class="code-container">
+					<pre id="generated-code" data-raw="${initialRawEncoded}">${text ? highlightTypeScript(text) : 'No code generated yet.'}</pre>
+				</div>
+				<button id="copyBtn">Copy to Clipboard</button>
+				${scriptUri ? `<script src="${scriptUri}"></script>` : ''}
 			</body>
 			</html>`;
+}
+
+function getNonce(): string {
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let text = '';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 }
 
 function highlightTypeScript(code: string): string {
