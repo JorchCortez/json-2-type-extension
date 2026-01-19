@@ -40,11 +40,6 @@
           "when": "editorHasSelection"
         },
         {
-          "command": "json2type.convertJsonToType",
-          "group": "navigation",
-          "when": "editorTextFocus && !editorHasSelection"
-        },
-        {
           "command": "json2type.convertFromClipboard",
           "group": "navigation",
           "when": "editorTextFocus"
@@ -69,6 +64,9 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
   },
   "devDependencies": {
     "@types/vscode": "^1.90.0",
