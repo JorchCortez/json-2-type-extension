@@ -47,7 +47,7 @@ export function generateTypes(input: unknown, options: GenerateOptions = {}): st
     lines.push('');
     // Then add the rest excluding the root
     for (const type of sortedTypes) {
-      if (type.name === rootName) continue;
+      if (type.name === rootName) {continue;}
       lines.push(`type ${type.name} = ${type.definition};`);
       lines.push('');
     }

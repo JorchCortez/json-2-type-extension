@@ -27,6 +27,7 @@ const defaultOptions: AppOptions = {
 };
 
 export function activate(context: vscode.ExtensionContext) {
+	textContext = context;
 	convertJsonToType(context);
 	convertFromClipboard(context);
 
@@ -98,6 +99,8 @@ export function convertFromClipboard(context: vscode.ExtensionContext) {
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
+let textContext: vscode.ExtensionContext | undefined;
+
 function processInputText(raw: string) {
 	try {
 		const jsonCandidate = sanitizeSelection(raw);
@@ -129,10 +132,18 @@ function processInputText(raw: string) {
 			{ enableScripts: true }
 		);
 		const nonce = getNonce();
-		panel.webview.html = getWebviewContent(types, generateOptions.rootName, panel.webview, nonce);
+		const scriptUri = (textContext && typeof (panel.webview as any).asWebviewUri === 'function')
+			? panel.webview.asWebviewUri(vscode.Uri.joinPath(textContext.extensionUri, 'media', 'panel.js'))
+			: undefined;
+		panel.webview.html = getWebviewContent(types, generateOptions.rootName, panel.webview, nonce, scriptUri);
 
 		panel.webview.onDidReceiveMessage((message) => {
+			console.log('[json2type] message from webview:', message);
 			if (!message) {return;}
+			if (message.command === 'webviewReady') {
+				// Webview script loaded; no toast in quiet mode
+				return;
+			}
 			if (message.command === 'updateRootName') {
 				const newRoot: string = String(message.rootName ?? '').trim();
 				if (!newRoot) {
@@ -147,6 +158,20 @@ function processInputText(raw: string) {
 					if (err instanceof Error) {errorMessage += err.message;}
 					vscode.window.showErrorMessage(errorMessage);
 				}
+			}
+			if (message.command === 'copyTypes') {
+				const textToCopy: string = String(message.text ?? '');
+				if (!textToCopy) {
+					panel.webview.postMessage({ type: 'copyStatus', ok: false, reason: 'empty' });
+					return;
+				}
+				vscode.env.clipboard.writeText(textToCopy).then(() => {
+					panel.webview.postMessage({ type: 'copyStatus', ok: true });
+				}, (err: unknown) => {
+					const reason = typeof err === 'object' && err && 'message' in (err as any) ? String((err as any).message) : 'copy failed';
+					vscode.window.showErrorMessage('Copy failed: ' + reason);
+					panel.webview.postMessage({ type: 'copyStatus', ok: false, reason });
+				});
 			}
 		});
 	} catch (err) {
@@ -201,13 +226,14 @@ export class JsonTerminalLinkProvider implements vscode.TerminalLinkProvider<Jso
 	}
 }
 
-function getWebviewContent(text: string | undefined, rootName: string | undefined, webview: vscode.Webview, nonce: string): string {
+function getWebviewContent(text: string | undefined, rootName: string | undefined, webview: vscode.Webview, nonce: string, scriptUri?: vscode.Uri): string {
+	const initialRawEncoded = encodeURIComponent(String(text ?? ''));
 	return `<!DOCTYPE html>
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; img-src ${webview.cspSource} https: data:; script-src 'nonce-${nonce}';">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; script-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline';">
 				<title>JSON2Type</title>
 				<style>
 					body {
@@ -345,90 +371,10 @@ function getWebviewContent(text: string | undefined, rootName: string | undefine
 					<span id="rootNamePreview" style="opacity:.8; font-size:12px;">→ Will generate…</span>
 				</div>
 				<div class="code-container">
-					<pre id="generated-code">${text ? highlightTypeScript(text) : 'No code generated yet.'}</pre>
+					<pre id="generated-code" data-raw="${initialRawEncoded}">${text ? highlightTypeScript(text) : 'No code generated yet.'}</pre>
 				</div>
 				<button id="copyBtn">Copy to Clipboard</button>
-				
-				<script nonce="${nonce}">
-					const vscode = acquireVsCodeApi();
-
-					function highlightTS(code) {
-						return code
-							.replace(/\b(type|interface|export|import|from|as)\b/g, '<span class="keyword">$1<\/span>')
-							.replace(/\b([A-Z][a-zA-Z0-9]*Type)\b/g, '<span class="type-name">$1<\/span>')
-							.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '<span class="property">$1<\/span><span class="punctuation">:<\/span>')
-							.replace(/\?/g, '<span class="optional">?<\/span>')
-							.replace(/[{}[\];]/g, '<span class="punctuation">$&<\/span>');
-					}
-
-
-					function debounce(fn, delay) {
-						let t;
-						return function() {
-							clearTimeout(t);
-							const args = arguments;
-							t = setTimeout(() => fn.apply(null, args), delay);
-						}
-					}
-
-					function toCamelCase(str) {
-						return String(str)
-							.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-							.replace(/^[A-Z]/, c => c.toLowerCase());
-					}
-
-					function previewTypeName(name) {
-						const base = toCamelCase(name || 'root') || 'root';
-						return base.endsWith('Type') ? base : base + 'Type';
-					}
-
-					const previewEl = document.getElementById('rootNamePreview');
-					const inputEl = document.getElementById('rootNameInput');
-
-					const onRootInput = debounce(() => {
-						const val = (document.getElementById('rootNameInput').value || '').trim();
-						if (!val) return; // ignore empty while typing
-						vscode.postMessage({ command: 'updateRootName', rootName: val });
-					}, 250);
-
-					inputEl.addEventListener('input', () => {
-						const val = inputEl.value || '';
-						if (previewEl) previewEl.textContent = '→ Will generate: ' + previewTypeName(val);
-						onRootInput();
-					});
-					inputEl.addEventListener('change', onRootInput);
-					inputEl.addEventListener('keydown', (e) => {
-						if (e.key === 'Enter') onRootInput();
-					});
-
-					window.addEventListener('message', (event) => {
-						const msg = event.data || {};
-						if (msg.type === 'updateTypes') {
-							const codeElement = document.getElementById('generated-code');
-							codeElement.innerHTML = highlightTS(msg.text || '');
-							const input = document.getElementById('rootNameInput');
-							if (typeof msg.rootName === 'string') input.value = msg.rootName;
-							if (previewEl && typeof msg.rootName === 'string') previewEl.textContent = '→ Will generate: ' + previewTypeName(msg.rootName);
-						}
-					});
-					function copyToClipboard(btn) {
-						const codeElement = document.getElementById('generated-code');
-						const textToCopy = codeElement.innerText || codeElement.textContent || '';
-						navigator.clipboard.writeText(textToCopy).then(function() {
-							const originalText = btn.textContent;
-							btn.textContent = 'Copied!';
-							btn.classList.add('copy-success');
-							setTimeout(() => {
-								btn.textContent = originalText;
-								btn.classList.remove('copy-success');
-							}, 2000);
-						}).catch(function(err) {
-							console.error('Could not copy text: ', err);
-						});
-					}
-
-					document.getElementById('copyBtn').addEventListener('click', (e) => copyToClipboard(e.currentTarget));
-				</script>
+				${scriptUri ? `<script src="${scriptUri}"></script>` : ''}
 			</body>
 			</html>`;
 }
