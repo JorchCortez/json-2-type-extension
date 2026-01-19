@@ -6,6 +6,14 @@ export function sanitizeSelection(selection: string): string {
     return text;
   }
 
+  // Handle browser/console printed prefixes like "Object { ... }" or "Array [ ... ]"
+  if (text.startsWith('Object {')) {
+    return text.replace(/^Object\s+/, '');
+  }
+  if (text.startsWith('Array [')) {
+    return text.replace(/^Array\s+/, '');
+  }
+
   // Strip leading export keyword
   let candidate = text.replace(/^export\s+/, '');
 

@@ -39,16 +39,27 @@ export function generateTypes(input: unknown, options: GenerateOptions = {}): st
   
   // Topologically sort types (best effort - complex dependencies might not be perfect)
   const sortedTypes = topologicalSort(registry);
-  
-  for (const type of sortedTypes) {
-    lines.push(`type ${type.name} = ${type.definition};`);
+
+  // Always start with the root type at the top
+  if (registry.types.has(rootName)) {
+    const root = registry.types.get(rootName)!;
+    lines.push(`type ${root.name} = ${root.definition};`);
     lines.push('');
-  }
-  
-  // Add root type if it's not already in the registry (for primitives, arrays, etc.)
-  if (!registry.types.has(rootName)) {
+    // Then add the rest excluding the root
+    for (const type of sortedTypes) {
+      if (type.name === rootName) continue;
+      lines.push(`type ${type.name} = ${type.definition};`);
+      lines.push('');
+    }
+  } else {
+    // Root is a primitive/array/union inline definition
     lines.push(`type ${rootName} = ${rootTypeDefinition};`);
     lines.push('');
+    // Then any extracted object types (if any)
+    for (const type of sortedTypes) {
+      lines.push(`type ${type.name} = ${type.definition};`);
+      lines.push('');
+    }
   }
   
   // Remove last empty line
