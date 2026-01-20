@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write  # Required to push commits and create releases
   actions: read    # Required to read workflow status
-  packages: read   # Required for package operation
+  packages: read   # Required for package operations
   pull-requests: write  # Required to allow the PR to be generated
 
 jobs:
