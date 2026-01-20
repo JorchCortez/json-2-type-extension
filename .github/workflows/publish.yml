@@ -8,7 +8,8 @@ on:
 permissions:
   contents: write  # Required to push commits and create releases
   actions: read    # Required to read workflow status
-  packages: read   # Required for package operations
+  packages: read   # Required for package operation
+  pull-requests: write  # Required to allow the PR to be generated
 
 jobs:
   publish:
@@ -51,7 +52,7 @@ jobs:
       
     - name: Run tests
       if: steps.check_commit.outputs.skip != 'true'
-      run: npm test
+      run: xvfb-run -a npm test
       continue-on-error: true # Don't fail if no tests exist yet
       
     - name: Configure Git
