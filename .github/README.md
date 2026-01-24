@@ -7,21 +7,6 @@ This repository is configured for automatic publishing to the VS Code Marketplac
 - Learn how this project started [here](https://www.thecoderaccoons.com/blog-posts/i-accidentally-made-a-vs-code-extension)
 - Learn more about this project [here](https://www.thecoderaccoons.com/projects/json2type-generator)
 
-## Required GitHub Secrets
-Make sure the following secrets are configured in your GitHub repository:
-
-### VSCE_PAT (Required)
-- **Description**: Visual Studio Code Extension Personal Access Token
-- **How to get it**:
-  1. Go to https://dev.azure.com/
-  2. Sign in with your Microsoft account
-  3. Go to User Settings > Personal Access Tokens
-  4. Create new token with these permissions:
-     - **Organization**: All accessible organizations
-     - **Expiration**: 1 year (or as needed)
-     - **Scopes**: Custom defined > Marketplace > Publish
-  5. Copy the token and add it as a GitHub secret named `VSCE_PAT`
-
 ## Workflow Features
 - ✅ Automatic version bumping (patch version)
 - ✅ TypeScript compilation
