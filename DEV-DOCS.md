@@ -39,10 +39,18 @@ Start the Extension Development Host to debug the command logic.
   - Convert JSON to Type
   - Convert JSON from Clipboard
 - Editor Context Menu:
-  - Convert JSON to Type (uses clipboard when no selection)
+  - Convert JSON to Type (requires a selection)
   - Convert JSON from Clipboard
 - Terminal View Title (toolbar):
   - Convert JSON from Clipboard
+
+## Sanitization Notes
+- Selection sanitization extracts the right‑hand side of assignments and trims TS suffixes like `as const` and semicolons.
+- `cleanJsonString()` is a small state machine:
+  - Removes `//` and `/*...*/` comments only when outside of string literals.
+  - Removes trailing commas before `}`/`]` and at end‑of‑input, outside strings.
+  - Preserves content inside strings (e.g., `http://` in URLs).
+- Parsing path: try `JSON.parse` first; on failure, fallback to `json5.parse` for JS‑like input.
 
 ## CI & Version Bump
 - Automatic deployment bumps the extension version during publish.

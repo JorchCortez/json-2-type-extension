@@ -42,4 +42,36 @@ suite('Sanitize Selection', () => {
     const parsed = JSON.parse(cleanJsonString(sanitized));
     assert.ok(parsed.questLog && Array.isArray(parsed.questLog.Quest), 'questLog.Quest should exist');
   });
+
+  test('Does not strip // inside strings (e.g., http://)', () => {
+    const input = `{"picture": "http://placehold.it/32x32", "ok": true}`;
+    const sanitized = sanitizeSelection(input);
+    const cleaned = cleanJsonString(sanitized);
+    const parsed = JSON.parse(cleaned);
+    assert.strictEqual((parsed as any).picture, 'http://placehold.it/32x32');
+    assert.strictEqual((parsed as any).ok, true);
+  });
+
+  test('Removes trailing comma at end-of-input for object', () => {
+    const input = `{
+      "name": "Pam",
+      "description": "The Strong Stuff"
+    },`;
+    const sanitized = sanitizeSelection(input);
+    const cleaned = cleanJsonString(sanitized);
+    const parsed = JSON.parse(cleaned);
+    assert.strictEqual((parsed as any).name, 'Pam');
+    assert.strictEqual((parsed as any).description, 'The Strong Stuff');
+  });
+
+  test('Removes trailing comma before closing bracket in array', () => {
+    const input = `let arr = [
+      { "id": 1 },
+    ];`;
+    const sanitized = sanitizeSelection(input);
+    const cleaned = cleanJsonString(sanitized);
+    const parsed = JSON.parse(cleaned);
+    assert.ok(Array.isArray(parsed));
+    assert.strictEqual((parsed as any)[0].id, 1);
+  });
 });

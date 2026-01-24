@@ -23,7 +23,7 @@ function normalizeShape(shape: TypeShape): any {
       };
     
     case "object":
-      if (!shape.objectKeys) return { kind: shape.kind, objectKeys: {} };
+      if (!shape.objectKeys) {return { kind: shape.kind, objectKeys: {} };}
       
       // Sort keys to ensure consistent hashing regardless of insertion order
       const sortedKeys: Record<string, any> = {};
@@ -43,7 +43,7 @@ function normalizeShape(shape: TypeShape): any {
       };
     
     case "union":
-      if (!shape.unionTypes) return { kind: shape.kind, unionTypes: [] };
+      if (!shape.unionTypes) {return { kind: shape.kind, unionTypes: [] };}
       
       // Sort union types by their normalized representation for consistency
       const normalizedTypes = shape.unionTypes.map(normalizeShape);

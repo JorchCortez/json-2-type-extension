@@ -101,7 +101,7 @@ export function singularize(word: string, customOverrides: Map<string, string> =
 }
 
 function preserveCase(result: string, original: string): string {
-  if (original.length === 0) return result;
+  if (original.length === 0) {return result;}
   
   // If original was all uppercase, make result all uppercase
   if (original === original.toUpperCase()) {

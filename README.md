@@ -95,6 +95,13 @@ Additional sanitization supported:
 - Parenthesized RHS values
 - Single‑member selections like `"questLog": {...}` are wrapped into `{ ... }`
 
+### Sanitization & Supported Input
+- Removes `//` and `/* ... */` comments only when outside strings (URLs like `http://...` are preserved)
+- Removes trailing commas before `}` or `]`, and at end‑of‑input
+- Handles assignments and right‑hand‑side extraction (e.g., `const x = {...};` → `{...}`)
+- Tolerates CRLF line endings; cleans common console/TS syntax noise
+- Falls back to JSON5 parsing for JS‑like objects (single quotes, unquoted keys)
+
 ## ⚙️ Configuration
 
 Works out of the box with sensible defaults:
@@ -113,8 +120,18 @@ Works out of the box with sensible defaults:
 - Very large JSON can take a moment
 - Complex structures might need manual refinement
 
+## 🛠️ Troubleshooting
+- "Failed to generate types: Invalid JSON syntax": Ensure input is valid JSON or JSON‑like (comments are fine). Check for unmatched quotes or brackets.
+- Clipboard conversion fails: Confirm the clipboard contains JSON; for selection, the command requires a non‑empty selection.
+- URLs being treated as comments: Fixed — `http://` inside strings is preserved.
+
 ## 📝 Release Notes
   
+### 1.1.3
+- ✅ Improved sanitization: remove comments and trailing commas only outside strings
+- ✅ Trailing comma tolerance at end‑of‑input
+- ✅ Prevent accidental stripping of `//` in URLs like `http://...`
+
 ### 1.1.1
 - ✅ Live root type name editing in the panel
 - ✅ Terminal link provider (click JSON in Terminal to convert)

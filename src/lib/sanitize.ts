@@ -45,9 +45,99 @@ export function sanitizeSelection(selection: string): string {
 }
 
 export function cleanJsonString(jsonString: string): string {
-  return jsonString
-    .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas before closing braces and brackets
-    .replace(/\/\/.*$/gm, '') // Remove line comments
-    .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
-    .trim();
+  // Robustly remove comments and trailing commas without touching content inside strings
+  const src = jsonString;
+  let out = '';
+  let i = 0;
+  const n = src.length;
+
+  let inString = false;
+  let stringQuote: '"' | '\'' | '' = '';
+  let escaped = false;
+
+  while (i < n) {
+    const ch = src[i];
+
+    if (inString) {
+      out += ch;
+      if (escaped) {
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+      } else if (ch === stringQuote) {
+        inString = false;
+        stringQuote = '';
+      }
+      i++;
+      continue;
+    }
+
+    // Not inside a string
+    if (ch === '"' || ch === '\'') {
+      inString = true;
+      stringQuote = ch as '"' | '\'';
+      out += ch;
+      i++;
+      continue;
+    }
+
+    // Handle line comments //...
+    if (ch === '/' && i + 1 < n && src[i + 1] === '/') {
+      // Skip until end of line (\n or \r)
+      i += 2;
+      while (i < n) {
+        const c = src[i];
+        if (c === '\n' || c === '\r') { break; }
+        i++;
+      }
+      // Do not include the EOL itself; let normal flow add it
+      continue;
+    }
+
+    // Handle block comments /* ... */
+    if (ch === '/' && i + 1 < n && src[i + 1] === '*') {
+      i += 2;
+      while (i < n) {
+        if (src[i] === '*' && i + 1 < n && src[i + 1] === '/') { i += 2; break; }
+        i++;
+      }
+      continue;
+    }
+
+    out += ch;
+    i++;
+  }
+
+  // Second pass: remove trailing commas before } or ] outside strings
+  let finalOut = '';
+  inString = false;
+  stringQuote = '';
+  escaped = false;
+  for (let j = 0; j < out.length; j++) {
+    const c = out[j];
+    if (inString) {
+      finalOut += c;
+      if (escaped) { escaped = false; }
+      else if (c === '\\') { escaped = true; }
+      else if (c === stringQuote) { inString = false; stringQuote = ''; }
+      continue;
+    }
+
+    if (c === '"' || c === '\'') { inString = true; stringQuote = c as '"' | '\''; finalOut += c; continue; }
+
+    if (c === ',') {
+      // Lookahead past whitespace to next non-space char
+      let k = j + 1;
+      while (k < out.length && /\s/.test(out[k])) { k++; }
+      const next = out[k];
+      if (next === '}' || next === ']' || k >= out.length) {
+        // Skip this comma (trailing comma before a closing token or end-of-input)
+        continue;
+      }
+    }
+
+    finalOut += c;
+  }
+
+  return finalOut.trim();
 }
